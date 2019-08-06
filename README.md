@@ -2,9 +2,9 @@
 
 ## Requirements
 
-opencv : `pip install opencv-python`
-dlib : `pip install dlib`
-kinova kortex : (kortex_api)[https://github.com/Kinovarobotics/kortex]
+1. opencv : `pip install opencv-python`
+2. dlib : `pip install dlib`
+3. kinova kortex : (kortex_api)[https://github.com/Kinovarobotics/kortex]
 
 ## Usage
 
