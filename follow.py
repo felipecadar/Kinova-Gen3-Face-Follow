@@ -1,13 +1,10 @@
-"""Terminal command:
-
-color: gst-launch-1.0 rtspsrc location=rtsp://192.168.1.10/color latency=30 ! rtph264depay ! avdec_h264 ! autovideosink
-
-depth: gst-launch-1.0 rtspsrc location=rtsp://192.168.1.10/depth latency=30 ! rtpgstdepay ! videoconvert ! autovideosink
-"""
-
 import numpy as np
+
 import cv2
 import dlib
+import time
+
+from videocaptureasync import VideoCaptureAsync
 
 from kortex_api.UDPTransport import UDPTransport
 from kortex_api.RouterClient import RouterClient
@@ -15,11 +12,9 @@ from kortex_api.RouterClient import RouterClient
 from kortex_api.SessionManager import SessionManager
 
 from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
-from kortex_api.autogen.client_stubs.DeviceManagerClientRpc import DeviceManagerClient
 
-from kortex_api.autogen.messages import Session_pb2, Base_pb2, Common_pb2
+from kortex_api.autogen.messages import Session_pb2, Base_pb2
 
-import time
 
 def send_home(base_client_service):
     print('Going Home....')
@@ -34,7 +29,7 @@ def send_home(base_client_service):
 
     base_client_service.ExecuteActionFromReference(action_handle)
     time.sleep(6)
-    print("Done!")
+    print(" Done!")
 
 def get_distance(p1, p2):
     x1, y1 = p1
@@ -69,7 +64,7 @@ if __name__ == "__main__":
     transport.connect(DEVICE_IP, DEVICE_PORT)
 
     # Create session
-    print("\nCreating session for communication")
+    print("Creating session for communication")
     session_info = Session_pb2.CreateSessionInfo()
     session_info.username = 'admin'
     session_info.password = 'admin'
@@ -82,33 +77,22 @@ if __name__ == "__main__":
 
     # Create required services
     base_client_service = BaseClient(router)
-    device_manager_service = DeviceManagerClient(router)
-
 
     send_home(base_client_service)
-    video_capture = cv2.VideoCapture("rtsp://192.168.1.10/color")
+
+    video_capture = VideoCaptureAsync("rtsp://192.168.1.10/color")
     detector = dlib.get_frontal_face_detector()
+
     FACTOR = 0.3
     VEL = 1
     movs = {
-        "front": np.array(( VEL,0,0,0,0,0)) ,
-        "back": np.array((-VEL,0,0,0,0,0)),
-        "left": np.array((0, VEL,0,0,0,0)),
-        "right": np.array((0,-VEL,0,0,0,0)),
-        "up": np.array((0,0, VEL,0,0,0)),
-        "down": np.array((0,0,-VEL,0,0,0)),
-        "look_down": np.array((0,0,0, VEL,0,0)),
         "look_up": np.array((0,0,0,-VEL,0,0)),
         "look_left": np.array((0,0,0,0, VEL,0)),
-        "look_right": np.array((0,0,0,0,-VEL,0)),
-        "root_right": np.array((0,0,0,0,0, VEL)),
-        "root_left": np.array((0,0,0,0,0,-VEL)),
         "stop": np.array((0,0,0,0,0,0))
     }
 
-    # send_home(base_client_service)
+    video_capture.start()
     while True:
-        # Capture frame-by-frame
         ret, frame = video_capture.read()
 
         center_X = int(frame.shape[1]/2)
@@ -145,20 +129,23 @@ if __name__ == "__main__":
 
         twist_command(base_client_service, list(cmd))
 
-        # Display the video output
         cv2.imshow('Video', frame)
 
-        # Quit video by typing Q
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
         end = time.time()
 
-        print(chr(27) + "[2J")
+        print(chr(27) + "[2J")  # Clear terminal
         print("Center = {}\nVel Vec = {}\nFPS: {}\nFaces: {}".format((center_X, center_Y), cmd, 1/(end - start), len(rects)))
 
-
-    video_capture.release()
+    video_capture.stop()
     cv2.destroyAllWindows()
 
     send_home(base_client_service)
+
+    print('Closing Session..')
+    session_manager.CloseSession()
+    router.SetActivationStatus(False)
+    transport.disconnect()
+    print('Done!')

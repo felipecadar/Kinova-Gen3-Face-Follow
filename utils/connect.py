@@ -6,6 +6,9 @@ from kortex_api.autogen.client_stubs.VisionConfigClientRpc import VisionConfigCl
 from kortex_api.autogen.client_stubs.DeviceConfigClientRpc import DeviceConfigClient
 from kortex_api.autogen.client_stubs.DeviceManagerClientRpc import DeviceManagerClient
 
+from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
+
+from kortex_api.autogen.messages import Session_pb2, Base_pb2, Common_pb2
 from kortex_api.autogen.messages import DeviceConfig_pb2, Session_pb2, DeviceManager_pb2, VisionConfig_pb2
 
 
@@ -35,7 +38,10 @@ session_manager = SessionManager(router)
 session_manager.CreateSession(session_info)
 
 # Create required services
+
+# Create required services
 device_manager_service = DeviceManagerClient(router)
 vision_config_service = VisionConfigClient(router)
+base_client_service = BaseClient(router)
 
 

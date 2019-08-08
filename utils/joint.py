@@ -35,7 +35,7 @@ def read_joints(base_client_service):
         angles[j.joint_identifier] = j.value
     return angles
 
-def joint_command(base_client_service, j_id, value):
+def joint_angle_command(base_client_service, j_id, value):
 
     constrained_joint_angles = Base_pb2.ConstrainedJointAngles()
     state = read_joints(base_client_service)
@@ -54,6 +54,42 @@ def joint_command(base_client_service, j_id, value):
 
     base_client_service.PlayJointTrajectory(constrained_joint_angles)
     # time.sleep(10)
+
+def joint_speed_command(base_client_service, j_id, value):
+
+    speeds = Base_pb2.JointSpeeds()
+    act_count = base_client_service.GetActuatorCount()
+    js = speeds.joint_speeds.add()
+    js.joint_identifier = j_id
+    js.value = value
+
+    # action = Base_pb2.Action()
+    # action.name = "Example speed action"
+    # action.application_data = ""
+
+    # act_count = base_client_service.GetActuatorCount()
+
+    # for joint_id in range(act_count.count):
+    #     joint_speed = action.send_joint_speeds.joint_speeds.add()
+    #     joint_speed.joint_identifier = joint_id
+    #     if joint_id == j_id:
+    #         joint_speed.value = value
+    #     else:
+    #         joint_speed.value = 0.1
+
+    #     print("joint ID {} Speed Value {}".format(joint_speed.joint_identifier, joint_speed.value))
+
+
+    # # base_client_service.PlayJointTrajectory(joint_speeds)
+    # base_client_service.ExecuteAction(action)
+    # time.sleep(10)
+
+def joint_speed(base_client_service, joint_id, value):
+    joint_speed = Base_pb2.JointSpeed()
+    joint_speed.joint_identifier = joint_id  # Need to exclude base id
+    joint_speed.value = value   # Speed in degrees/second
+    joint_speed.duration = 0  # Unlimited time to execute
+    base_client_service.SendSelectedJointSpeedCommand(joint_speed)
 
 def main(stdscr):
     # do not wait for input when calling getch
@@ -83,10 +119,10 @@ def main(stdscr):
             elif c == 46:
                 joint_value -= 5
 
-            joint_command(base_client_service, 5, joint_value)
+            joint_angle_command(base_client_service, 5, joint_value)
         # else:
 
-            # joint_command(base_client_service, 6, joint_value)
+            # joint_angle_command(base_client_service, 6, joint_value)
 
         stdscr.addstr(str(joint_value) + " ")
         stdscr.refresh()
@@ -150,10 +186,10 @@ if __name__ == "__main__":
 
     # curses.wrapper(main)
 
-    angle = int(input())
-    while angle < 400:
-        joint_command(base_client_service, 6, angle)
-        angle = int(input())
+    speed = int(input())
+    while speed < 50:
+        joint_speed_command(base_client_service, 6, speed)
+        speed = int(input())
 
     # # Example core
     # example_angular_action_movement(base_client_service)
