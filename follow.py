@@ -32,9 +32,7 @@ def send_home(base_client_service):
     print(" Done!")
 
 def get_distance(p1, p2):
-    x1, y1 = p1
-    x2, y2 = p2
-    return (x2-x1, y2-y1)
+    return (p2[0]-p1[0], p2[1]-p1[1])
 
 def twist_command(base_client_service, cmd):
     command = Base_pb2.TwistCommand()
